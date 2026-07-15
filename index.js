@@ -2,6 +2,7 @@
 
 const fs = require("fs");
 const path = require("path");
+const os = require("os");
 const { program } = require("commander");
 const chalk = require("chalk");
 const ora = require("ora");
@@ -13,6 +14,14 @@ const BOOKMARKS_PATH = path.join(process.env.HOME || process.env.USERPROFILE, "L
 const BOOKMARKS_PATH_WIN = path.join(process.env.USERPROFILE || "", "AppData/Local/Google/Chrome/User Data/Default/Bookmarks");
 // Linux path
 const BOOKMARKS_PATH_LINUX = path.join(process.env.HOME || "", ".config/google-chrome/Default/Bookmarks");
+
+// Expand ~ to user's home directory
+function resolvePath(p) {
+  if (typeof p === "string" && p.startsWith("~")) {
+    return path.join(os.homedir(), p.slice(1));
+  }
+  return p;
+}
 
 // Helper to find Chrome bookmarks file
 function findBookmarksFile() {
@@ -250,7 +259,7 @@ async function main() {
   if (folderNames.length > 0) {
     // CLI mode: folder names are positional args, output dir from -o option
     foldersToScan = folderNames;
-    outputDir = options.output || "./downloads";
+    outputDir = resolvePath(options.output || "./downloads");
     console.log(chalk.gray(`📋 Using CLI arguments`));
   } else {
     // Config mode: read from config.json
@@ -270,7 +279,7 @@ async function main() {
     }
 
     foldersToScan = config.bookmarkFolders;
-    outputDir = options.output || config.outputDirectory || "./downloads";
+    outputDir = resolvePath(options.output || config.outputDirectory || "./downloads");
     console.log(chalk.gray("📋 Using configuration from config.json"));
   }
 

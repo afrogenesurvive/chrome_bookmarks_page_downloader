@@ -80,6 +80,8 @@ The same works in `config.json`:
 }
 ```
 
+> **Tip:** Use `~/Downloads` or `~/Desktop/my-pages` in `outputDirectory` — the `~` is automatically expanded to your home directory.
+
 Use `-v` (`--verbose`) to see a warning when a plain folder name matches multiple locations — it'll suggest the exact path to use.
 
 ## Requirements
