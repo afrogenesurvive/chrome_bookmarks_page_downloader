@@ -1,0 +1,34 @@
+{
+  "name": "bookmark-downloader",
+  "version": "1.0.0",
+  "description": "Download all web pages from a Chrome bookmarks folder",
+  "main": "index.js",
+  "bin": {
+    "bookmark-downloader": "./index.js"
+  },
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": [
+    "bookmarks",
+    "chrome",
+    "downloader",
+    "cli"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/afrogenesurvive/chrome_bookmarks_page_downloader.git"
+  },
+  "author": "afrogenesurvive",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/afrogenesurvive/chrome_bookmarks_page_downloader/issues"
+  },
+  "homepage": "https://github.com/afrogenesurvive/chrome_bookmarks_page_downloader#readme",
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "commander": "^11.1.0",
+    "ora": "^5.4.1",
+    "puppeteer": "^21.6.1"
+  }
+}
