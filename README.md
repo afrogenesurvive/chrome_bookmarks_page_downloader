@@ -81,3 +81,37 @@ The same works in `config.json`:
 ```
 
 Use `-v` (`--verbose`) to see a warning when a plain folder name matches multiple locations — it'll suggest the exact path to use.
+
+## Requirements
+
+- **Google Chrome** must be installed at `/Applications/Google Chrome.app` (default macOS location).
+- Node.js 18+.
+
+## Output
+
+Downloaded pages are saved as HTML files in the output directory. A `manifest.json` is also created with details on every page:
+
+```json
+{
+  "folders": ["Age of Aquarius"],
+  "total": 26,
+  "successful": 20,
+  "failed": 6,
+  "files": [
+    {
+      "status": "success",
+      "name": "page_name.html",
+      "path": "./downloads/page_name.html",
+      "originalName": "Original Bookmark Name",
+      "sourceFolder": "Age of Aquarius"
+    },
+    {
+      "status": "failed",
+      "originalName": "Failed Page Name",
+      "url": "https://example.com/page",
+      "sourceFolder": "Age of Aquarius",
+      "error": "Failed to launch the browser process!"
+    }
+  ]
+}
+```

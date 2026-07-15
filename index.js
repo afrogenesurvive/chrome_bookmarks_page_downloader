@@ -153,7 +153,8 @@ function getBookmarkUrls(folder) {
 async function downloadPage(url, outputDir, name) {
   const browser = await puppeteer.launch({
     headless: "new",
-    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    executablePath: "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+    args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-gpu"],
   });
 
   try {
@@ -366,8 +367,9 @@ async function main() {
           console.log(chalk.green(`  ✅ [${bookmark.sourceFolder}] ${bookmark.name}`));
         }
       } else {
-        results.push({ success: false, error: result.reason, sourceFolder: bookmark.sourceFolder });
-        console.log(chalk.red(`  ❌ [${bookmark.sourceFolder}] ${bookmark.name}: ${result.reason}`));
+        const errorMsg = result.reason?.message || String(result.reason);
+        results.push({ success: false, error: errorMsg, name: bookmark.name, url: bookmark.url, sourceFolder: bookmark.sourceFolder });
+        console.log(chalk.red(`  ❌ [${bookmark.sourceFolder}] ${bookmark.name}: ${errorMsg}`));
       }
     });
 
@@ -395,14 +397,23 @@ async function main() {
     total: allBookmarks.length,
     successful,
     failed,
-    files: results
-      .filter((r) => r.success)
-      .map((r) => ({
-        name: r.filename,
-        path: r.filepath,
-        originalName: r.name,
-        sourceFolder: r.sourceFolder,
-      })),
+    files: results.map((r) =>
+      r.success
+        ? {
+            status: "success",
+            name: r.filename,
+            path: r.filepath,
+            originalName: r.name,
+            sourceFolder: r.sourceFolder,
+          }
+        : {
+            status: "failed",
+            originalName: r.name,
+            url: r.url,
+            sourceFolder: r.sourceFolder,
+            error: r.error,
+          },
+    ),
   };
 
   const manifestPath = path.join(outputDir, "manifest.json");
