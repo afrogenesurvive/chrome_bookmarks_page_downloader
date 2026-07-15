@@ -58,3 +58,26 @@ node index.js
 # Verbose with high concurrency
 node index.js "Bookmarks Bar" -o ./all-pages --verbose --concurrency 5
 ```
+
+## Handling duplicate folder names
+
+If you have multiple bookmark folders with the same name in different parts of your bookmarks tree, you can use a **path** instead of just a folder name — separate segments with `/`.
+
+```bash
+# Download from a specific subfolder using its full path
+node index.js "Bookmarks Bar/Tech Articles" -o ./tech-articles
+
+# Download from two different folders that share the same name
+node index.js "Bookmarks Bar/Dev" "Other Bookmarks/Dev" -o ./dev-pages
+```
+
+The same works in `config.json`:
+
+```json
+{
+  "outputDirectory": "./downloads",
+  "bookmarkFolders": ["Bookmarks Bar/Tech Articles", "Other Bookmarks/Dev"]
+}
+```
+
+Use `-v` (`--verbose`) to see a warning when a plain folder name matches multiple locations — it'll suggest the exact path to use.

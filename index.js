@@ -28,6 +28,18 @@ function findBookmarksFile() {
 
 // Recursively search for bookmarks folder by name
 function findFolderByName(node, folderName) {
+  // Handle the roots object (keys like bookmark_bar, other, synced)
+  if (!node.type) {
+    for (const key in node) {
+      const child = node[key];
+      if (child && child.type === "folder") {
+        const result = findFolderByName(child, folderName);
+        if (result) return result;
+      }
+    }
+    return null;
+  }
+
   if (node.type === "folder" && node.name.toLowerCase() === folderName.toLowerCase()) {
     return node;
   }
@@ -39,6 +51,81 @@ function findFolderByName(node, folderName) {
     }
   }
   return null;
+}
+
+// Traverse the bookmark tree by path (e.g. "Other Bookmarks/Tech Articles")
+function findFolderByPath(roots, pathStr) {
+  const segments = pathStr.split("/").map((s) => s.trim());
+
+  // First segment must match a root-level folder
+  let current = null;
+
+  for (const key in roots) {
+    const node = roots[key];
+    if (node.type === "folder" && node.name.toLowerCase() === segments[0].toLowerCase()) {
+      current = node;
+      break;
+    }
+  }
+
+  if (!current) return null;
+  if (segments.length === 1) return current;
+
+  // Traverse remaining segments into the tree
+  for (let i = 1; i < segments.length; i++) {
+    const segment = segments[i];
+    if (!current.children) return null;
+
+    let found = null;
+    for (const child of current.children) {
+      if (child.type === "folder" && child.name.toLowerCase() === segment.toLowerCase()) {
+        found = child;
+        break;
+      }
+    }
+
+    if (!found) return null;
+    current = found;
+  }
+
+  return current;
+}
+
+// Resolve a folder input (name or path) to a folder node and the display path
+function resolveFolder(roots, input) {
+  if (input.includes("/")) {
+    return { folder: findFolderByPath(roots, input), resolvedPath: input };
+  }
+
+  // Plain folder name — search the whole tree (first match)
+  const folder = findFolderByName(roots, input);
+  return { folder, resolvedPath: input };
+}
+
+// Count how many folders with a given name exist in the tree
+function countFolderOccurrences(node, folderName) {
+  let count = 0;
+
+  // Handle the roots object (keys like bookmark_bar, other, synced)
+  if (!node.type) {
+    for (const key in node) {
+      const child = node[key];
+      if (child && child.type === "folder") {
+        count += countFolderOccurrences(child, folderName);
+      }
+    }
+    return count;
+  }
+
+  if (node.type === "folder" && node.name.toLowerCase() === folderName.toLowerCase()) {
+    count++;
+  }
+  if (node.children) {
+    for (const child of node.children) {
+      count += countFolderOccurrences(child, folderName);
+    }
+  }
+  return count;
 }
 
 // Get all bookmark URLs from a folder
@@ -116,21 +203,21 @@ function loadConfig() {
 }
 
 /**
- * List all bookmark URLs for a list of folder names, returning tagged items
+ * List all bookmark URLs for a list of folder names/paths, returning tagged items
  */
-function collectUrlsFromFolders(bookmarks, folderNames) {
+function collectUrlsFromFolders(bookmarks, folderInputs) {
   const allBookmarks = [];
   const missingFolders = [];
 
-  for (const name of folderNames) {
-    const folder = findFolderByName(bookmarks.roots, name);
+  for (const input of folderInputs) {
+    const { folder, resolvedPath } = resolveFolder(bookmarks.roots, input);
     if (!folder) {
-      missingFolders.push(name);
+      missingFolders.push(input);
       continue;
     }
     const urls = getBookmarkUrls(folder);
     for (const item of urls) {
-      allBookmarks.push({ ...item, sourceFolder: name });
+      allBookmarks.push({ ...item, sourceFolder: resolvedPath });
     }
   }
 
@@ -213,6 +300,20 @@ async function main() {
 
   // Collect URLs from all specified folders
   const { allBookmarks, missingFolders } = collectUrlsFromFolders(bookmarks, foldersToScan);
+
+  // Warn about ambiguous folder names (verbose only)
+  if (options.verbose) {
+    for (const input of foldersToScan) {
+      if (!input.includes("/")) {
+        const count = countFolderOccurrences(bookmarks.roots, input);
+        if (count > 1) {
+          console.log(
+            chalk.yellow(`⚠️  Multiple folders (${count}) named "${input}" found. Use a path like "Parent/${input}" to pick a specific one.`),
+          );
+        }
+      }
+    }
+  }
 
   // Report any missing folders
   for (const name of missingFolders) {
